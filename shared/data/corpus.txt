@@ -1,0 +1,26 @@
+Sahasra grew out of a simple developer wish.
+Write code on the local machine.
+Run the heavier work remotely.
+Avoid turning every experiment into a cloud setup project.
+
+The product became clearer each time the team fixed one rough edge.
+A better doctor command.
+A clearer wallet.
+A cleaner session close path.
+A more honest explanation of what gets sent to the runtime and what stays under the user's control.
+
+The point was never to add complexity for its own sake.
+The point was to keep JAX code feeling normal while making larger or more VRAM-hungry work easier to push onto a remote worker.
+
+That is why the examples stay grounded.
+Matrix multiplies.
+Inference loops.
+Training steps.
+A tiny transformer that is small enough to understand and real enough to show the product path.
+
+The best demos are the ones that explain the whole story.
+Local code.
+Remote session.
+Visible cost.
+Clear output.
+No detective work.
