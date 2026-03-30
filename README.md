@@ -35,7 +35,7 @@ It is trying to make that difference understandable and practical.
 If you want the fastest path through the repo:
 
 1. Run one local example from `without_sahasra/`
-2. Install Sahasra from TestPyPI
+2. Install Sahasra `0.1.1` from TestPyPI
 3. Create an API key from the Sahasra app
 4. Run the matching example from `with_sahasra/`
 
@@ -77,12 +77,12 @@ python -m pip install \
 python -m pip install \
   --index-url https://test.pypi.org/simple/ \
   --extra-index-url https://pypi.org/simple \
-  "sahasra-core==0.1.0"
+  "sahasra-core==0.1.1"
 
 python -m pip install \
   --index-url https://test.pypi.org/simple/ \
   --extra-index-url https://pypi.org/simple \
-  "sahasra==0.1.0"
+  "sahasra==0.1.1"
 ```
 
 Then configure your Sahasra environment:
@@ -100,6 +100,11 @@ sahasra me --base-url https://demo.sahasra.dev
 sahasra billing-me --base-url https://demo.sahasra.dev
 ```
 
+Current validated invite-only beta packages:
+
+- `sahasra-core==0.1.1`
+- `sahasra==0.1.1`
+
 ## Run The Examples
 
 ### Local
@@ -116,8 +121,8 @@ python without_sahasra/04_tiny_transformer.py --epochs 2
 ```bash
 python with_sahasra/01_basic_matmul.py
 python with_sahasra/02_mlp_inference.py
-python with_sahasra/03_mlp_training.py --epochs 2 --steps-per-execution 2
-python with_sahasra/04_tiny_transformer.py --epochs 2 --steps-per-execution 2
+python with_sahasra/03_mlp_training.py --epochs 2 --steps-per-execution 8
+python with_sahasra/04_tiny_transformer.py --epochs 2 --steps-per-execution 8
 ```
 
 ## Timing Output
@@ -176,8 +181,8 @@ Latest timings collected on the current demo setup:
 | --- | --- | --- | --- |
 | `01_basic_matmul.py` | `0.475s` | `9.515s` | remote path includes end-to-end runtime/orchestration overhead for a tiny workload |
 | `02_mlp_inference.py` | `0.075s` avg across 5 runs | `4.915s` avg across 3 runs | warm repeated runs get cheaper on both sides |
-| `03_mlp_training.py` | `1.407s` total | `207.521s` total | remote run uses `sahasra.trainer(..., steps_per_execution=2)` |
-| `04_tiny_transformer.py` | `7.893s` total | `90.289s` total | remote run uses `sahasra.trainer(..., steps_per_execution=2)` |
+| `03_mlp_training.py` | `1.407s` total | `207.521s` total | historical remote snapshot used `sahasra.trainer(..., steps_per_execution=2)` |
+| `04_tiny_transformer.py` | `7.893s` total | `90.289s` total | historical remote snapshot used `sahasra.trainer(..., steps_per_execution=2)` |
 
 These are not meant to claim that Sahasra is faster than local execution on small jobs.
 They are meant to show the current product tradeoff clearly:
@@ -232,10 +237,10 @@ python without_sahasra/02_mlp_inference.py
 python with_sahasra/02_mlp_inference.py
 
 python without_sahasra/03_mlp_training.py
-python with_sahasra/03_mlp_training.py --steps-per-execution 2
+python with_sahasra/03_mlp_training.py --steps-per-execution 8
 
 python without_sahasra/04_tiny_transformer.py
-python with_sahasra/04_tiny_transformer.py --steps-per-execution 2
+python with_sahasra/04_tiny_transformer.py --steps-per-execution 8
 ```
 
 For the Sahasra runs, make sure these are set first:

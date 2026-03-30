@@ -34,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--learning-rate", type=float, default=0.08)
     parser.add_argument("--context-length", type=int, default=48)
     parser.add_argument("--stride", type=int, default=6)
-    parser.add_argument("--steps-per-execution", type=int, default=4)
+    parser.add_argument("--steps-per-execution", type=int, default=8)
     parser.add_argument("--sample-steps", type=int, default=80)
     parser.add_argument("--prompt", default="Sahasra ")
     parser.add_argument("--seed", type=int, default=0)
