@@ -30,6 +30,22 @@ This repo is for people who want to answer questions like:
 It is not trying to hide the difference between local and remote execution.
 It is trying to make that difference understandable and practical.
 
+## Quick Start
+
+If you want the fastest path through the repo:
+
+1. Run one local example from `without_sahasra/`
+2. Install Sahasra from TestPyPI
+3. Create an API key from the Sahasra app
+4. Run the matching example from `with_sahasra/`
+
+Suggested first pair:
+
+```bash
+python without_sahasra/01_basic_matmul.py
+python with_sahasra/01_basic_matmul.py
+```
+
 ## Install
 
 ### Local-only JAX examples
@@ -154,6 +170,7 @@ Latest timings collected on the current demo setup:
 
 - local runs: direct JAX on the RTX 5070 Ti host with CUDA JAX enabled
 - Sahasra runs: the same host's RTX 5070 Ti reached through the Sahasra API/runtime path
+- so these numbers are best read as a workflow/product comparison, not a hardware comparison
 
 | Example | Local | With Sahasra | Notes |
 | --- | --- | --- | --- |
