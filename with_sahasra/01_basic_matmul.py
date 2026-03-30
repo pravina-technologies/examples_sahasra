@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 
 import numpy as np
 import sahasra
@@ -23,8 +24,10 @@ def main() -> None:
         region="ap-south-1",
     ) as runtime:
         remote_fn = sahasra.jit(matmul_relu, runtime=runtime, output_mode="remote")
+        start = time.perf_counter()
         result = remote_fn.remote(a, b)
         out = result.materialize()
+        elapsed = time.perf_counter() - start
         print(
             json.dumps(
                 {
@@ -37,6 +40,7 @@ def main() -> None:
                     "billing_status": result.execution.billing_status,
                     "billed_amount_inr": result.execution.billed_amount_inr,
                     "customer_summary": getattr(result.execution, "customer_summary", None),
+                    "elapsed_sec": elapsed,
                 },
                 indent=2,
             )

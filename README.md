@@ -104,6 +104,130 @@ python with_sahasra/03_mlp_training.py --epochs 2 --steps-per-execution 2
 python with_sahasra/04_tiny_transformer.py --epochs 2 --steps-per-execution 2
 ```
 
+## Timing Output
+
+The examples now print timing information directly in their JSON output so local and remote runs are easier to compare:
+
+- `01_basic_matmul.py`
+  - `elapsed_sec`
+- `02_mlp_inference.py`
+  - `elapsed_sec`
+  - `avg_elapsed_sec`
+- `03_mlp_training.py`
+  - `epoch_elapsed_sec`
+  - `total_elapsed_sec`
+- `04_tiny_transformer.py`
+  - `epoch_elapsed_sec`
+  - `total_elapsed_sec`
+
+For local runs, the examples also print `backend`, so you can see whether JAX is using `cpu` or `gpu`.
+
+### Screenshot / CPU-only mode
+
+If you want the local examples to stay on CPU for clean screenshots or CPU-only comparisons:
+
+```bash
+export SAHASRA_EXAMPLES_FORCE_CPU=1
+python without_sahasra/04_tiny_transformer.py
+unset SAHASRA_EXAMPLES_FORCE_CPU
+```
+
+### Local GPU JAX
+
+If your machine has a supported NVIDIA driver, you can install GPU JAX and run the local examples on GPU:
+
+```bash
+python -m pip install --upgrade "jax[cuda13]"
+```
+
+The examples also set:
+
+```bash
+XLA_PYTHON_CLIENT_PREALLOCATE=false
+```
+
+to reduce aggressive GPU memory preallocation during local runs.
+
+## Latest Timing Snapshot
+
+Latest timings collected on the current demo setup:
+
+- local runs: direct JAX on the RTX 5070 Ti host with CUDA JAX enabled
+- Sahasra runs: the same host's RTX 5070 Ti reached through the Sahasra API/runtime path
+
+| Example | Local | With Sahasra | Notes |
+| --- | --- | --- | --- |
+| `01_basic_matmul.py` | `0.475s` | `9.515s` | remote path includes end-to-end runtime/orchestration overhead for a tiny workload |
+| `02_mlp_inference.py` | `0.075s` avg across 5 runs | `4.915s` avg across 3 runs | warm repeated runs get cheaper on both sides |
+| `03_mlp_training.py` | `1.407s` total | `207.521s` total | remote run uses `sahasra.trainer(..., steps_per_execution=2)` |
+| `04_tiny_transformer.py` | `7.893s` total | `90.289s` total | remote run uses `sahasra.trainer(..., steps_per_execution=2)` |
+
+These are not meant to claim that Sahasra is faster than local execution on small jobs.
+They are meant to show the current product tradeoff clearly:
+
+- local direct JAX is still much faster for small workloads on the same GPU host
+- Sahasra adds control-plane and materialization overhead
+- the benefit is the remote execution product surface: API key auth, wallet billing, reusable sessions, remote tensor handling, and the ability to move work off the laptop/workstation workflow
+
+## Latest Local GPU Baseline
+
+Latest local baseline collected on the RTX 5070 Ti host with CUDA JAX enabled:
+
+| Example | Mode | Key Timing |
+| --- | --- | --- |
+| `01_basic_matmul.py` | local GPU | `elapsed_sec = 0.475s` |
+| `02_mlp_inference.py` | local GPU | `avg_elapsed_sec = 0.075s` across 5 runs |
+| `03_mlp_training.py` | local GPU | `total_elapsed_sec = 1.407s` |
+| `04_tiny_transformer.py` | local GPU | `total_elapsed_sec = 7.893s` for 2 epochs |
+
+Notes:
+
+- first-run JAX compile/warmup dominates several local timings
+- later epochs can be much faster than the first epoch once kernels are warm
+- the tiny transformer local GPU run still showed first-run CUDA/JAX warnings on this host, but it completed successfully and reported GPU timings
+
+## Latest Sahasra Remote Snapshot
+
+Latest Sahasra timings collected against `https://demo.sahasra.dev` on the current single-worker beta:
+
+| Example | Mode | Key Timing |
+| --- | --- | --- |
+| `01_basic_matmul.py` | Sahasra remote | `elapsed_sec = 9.515s` |
+| `02_mlp_inference.py` | Sahasra remote | `avg_elapsed_sec = 4.915s` across 3 runs |
+| `03_mlp_training.py` | Sahasra remote | `total_elapsed_sec = 207.521s` |
+| `04_tiny_transformer.py` | Sahasra remote | `total_elapsed_sec = 90.289s` for 2 epochs |
+
+Notes:
+
+- these runs were billed successfully and executed on `worker-5070ti-demo`
+- the current public beta runs on a single RTX 5070 Ti worker, which is also why queue/admission behavior matters under overlap
+- the smaller examples are dominated by remote orchestration overhead; the training examples are better representatives of the current remote flow
+
+## Reproducible Comparison Commands
+
+Run these from the repo root after activating your environment:
+
+```bash
+python without_sahasra/01_basic_matmul.py
+python with_sahasra/01_basic_matmul.py
+
+python without_sahasra/02_mlp_inference.py
+python with_sahasra/02_mlp_inference.py
+
+python without_sahasra/03_mlp_training.py
+python with_sahasra/03_mlp_training.py --steps-per-execution 2
+
+python without_sahasra/04_tiny_transformer.py
+python with_sahasra/04_tiny_transformer.py --steps-per-execution 2
+```
+
+For the Sahasra runs, make sure these are set first:
+
+```bash
+export SAHASRA_API_URL="https://demo.sahasra.dev"
+export SAHASRA_API_BEARER_TOKEN="sk_sahasra_..."
+```
+
 ## Repo Layout
 
 ```text

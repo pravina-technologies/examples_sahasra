@@ -4,7 +4,12 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
+
+if os.getenv("SAHASRA_EXAMPLES_FORCE_CPU") == "1":
+    os.environ.setdefault("JAX_PLATFORMS", "cpu")
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 import jax
 import numpy as np
@@ -24,7 +29,7 @@ from shared.tiny_transformer import (
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Remote tiny transformer example with Sahasra.")
-    parser.add_argument("--epochs", type=int, default=4)
+    parser.add_argument("--epochs", type=int, default=2)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--learning-rate", type=float, default=0.08)
     parser.add_argument("--context-length", type=int, default=48)
@@ -39,6 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    total_start = time.perf_counter()
     dataset = build_char_dataset(corpus_path=args.corpus, context_length=args.context_length, stride=args.stride)
     params = init_params(
         jax.random.PRNGKey(args.seed),
@@ -68,6 +74,7 @@ def main() -> None:
     last_execution = None
     try:
         for epoch in range(1, args.epochs + 1):
+            epoch_start = time.perf_counter()
             order = shuffle_rng.permutation(dataset["train_x"].shape[0])
             shuffled_x = dataset["train_x"][order]
             shuffled_y = dataset["train_y"][order]
@@ -96,6 +103,7 @@ def main() -> None:
                         "billed_amount_inr": last_execution.billed_amount_inr,
                         "chunk_calls": epoch_result.chunk_calls,
                         "steps_per_execution": epoch_result.steps_per_execution,
+                        "epoch_elapsed_sec": time.perf_counter() - epoch_start,
                         "mode": "with_sahasra",
                     }
                 ),
@@ -111,6 +119,7 @@ def main() -> None:
                     "mode": "with_sahasra",
                     "session_id": runtime.session.session.id,
                     "worker_id": runtime.session.session.worker_id,
+                    "total_elapsed_sec": time.perf_counter() - total_start,
                     "parameter_count": count_parameters(final_params),
                     "train_examples": int(dataset["train_x"].shape[0]),
                     "val_examples": int(dataset["val_x"].shape[0]),

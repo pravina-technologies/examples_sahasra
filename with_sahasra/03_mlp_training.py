@@ -4,7 +4,12 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
+
+if os.getenv("SAHASRA_EXAMPLES_FORCE_CPU") == "1":
+    os.environ.setdefault("JAX_PLATFORMS", "cpu")
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 import jax
 import numpy as np
@@ -27,6 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    total_start = time.perf_counter()
     dataset = make_dataset(seed=args.seed)
     params = init_params(jax.random.PRNGKey(args.seed), hidden_dim=32)
     learning_rate = np.asarray(args.learning_rate, dtype=np.float32)
@@ -51,6 +57,7 @@ def main() -> None:
     final_state = None
     try:
         for epoch in range(1, args.epochs + 1):
+            epoch_start = time.perf_counter()
             order = shuffle_rng.permutation(dataset["train_x"].shape[0])
             shuffled_x = dataset["train_x"][order]
             shuffled_y = dataset["train_y"][order]
@@ -77,6 +84,7 @@ def main() -> None:
                         "runtime_mode": execution.runtime_mode,
                         "billing_status": execution.billing_status,
                         "billed_amount_inr": execution.billed_amount_inr,
+                        "epoch_elapsed_sec": time.perf_counter() - epoch_start,
                         "mode": "with_sahasra",
                     }
                 ),
@@ -91,6 +99,7 @@ def main() -> None:
                     "mode": "with_sahasra",
                     "session_id": runtime.session.session.id,
                     "worker_id": runtime.session.session.worker_id,
+                    "total_elapsed_sec": time.perf_counter() - total_start,
                     **summary_dict(dataset, final_state),
                 },
                 indent=2,

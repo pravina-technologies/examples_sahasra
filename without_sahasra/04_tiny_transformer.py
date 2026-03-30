@@ -2,8 +2,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import time
 from pathlib import Path
+
+if os.getenv("SAHASRA_EXAMPLES_FORCE_CPU") == "1":
+    os.environ.setdefault("JAX_PLATFORMS", "cpu")
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 import jax
 import numpy as np
@@ -23,7 +29,7 @@ from shared.tiny_transformer import (
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Local tiny transformer example without Sahasra.")
-    parser.add_argument("--epochs", type=int, default=4)
+    parser.add_argument("--epochs", type=int, default=2)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--learning-rate", type=float, default=0.08)
     parser.add_argument("--context-length", type=int, default=48)
@@ -37,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    total_start = time.perf_counter()
     dataset = build_char_dataset(corpus_path=args.corpus, context_length=args.context_length, stride=args.stride)
     params = init_params(
         jax.random.PRNGKey(args.seed),
@@ -49,6 +56,7 @@ def main() -> None:
     rng = np.random.default_rng(args.seed + 17)
 
     for epoch in range(1, args.epochs + 1):
+        epoch_start = time.perf_counter()
         last_loss = None
         last_accuracy = None
         for batch_x, batch_y in iterate_minibatches(
@@ -67,10 +75,12 @@ def main() -> None:
                 {
                     "epoch": epoch,
                     "epochs": args.epochs,
+                    "backend": jax.default_backend(),
                     "last_batch_loss": last_loss,
                     "last_batch_accuracy": last_accuracy,
                     "val_loss": float(np.asarray(val_loss)),
                     "val_accuracy": float(np.asarray(val_accuracy)),
+                    "epoch_elapsed_sec": time.perf_counter() - epoch_start,
                     "mode": "without_sahasra",
                 }
             ),
@@ -83,6 +93,8 @@ def main() -> None:
                 "status": "completed",
                 "example": "04_tiny_transformer",
                 "mode": "without_sahasra",
+                "backend": jax.default_backend(),
+                "total_elapsed_sec": time.perf_counter() - total_start,
                 "parameter_count": count_parameters(params),
                 "train_examples": int(dataset["train_x"].shape[0]),
                 "val_examples": int(dataset["val_x"].shape[0]),
