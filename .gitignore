@@ -201,6 +201,7 @@ cython_debug/
 
 # Example dataset cache
 shared/data/mnist/
+shared/checkpoints/
 .cursorignore
 .cursorindexingignore
 

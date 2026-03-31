@@ -18,12 +18,14 @@ The examples are ordered from basic to more demanding:
 3. `03_mlp_training.py`
 4. `04_tiny_transformer.py`
 5. `05_mnist_cnn.py`
+6. `05_mnist_cnn_inference.py` in `with_sahasra/`
 
 The newest example pair uses a real dataset:
 
 - `05_mnist_cnn.py` downloads MNIST through `torchvision.datasets.MNIST`
 - the local and Sahasra versions share the same CNN model code
 - both print richer progress so you can watch training and validation improve live
+- the Sahasra training script saves a `.npz` checkpoint, and `05_mnist_cnn_inference.py` reloads it in a fresh inference session
 
 ## What This Repo Is For
 
@@ -133,6 +135,7 @@ python with_sahasra/02_mlp_inference.py
 python with_sahasra/03_mlp_training.py --epochs 2 --steps-per-execution 8
 python with_sahasra/04_tiny_transformer.py --epochs 2 --steps-per-execution 8
 python with_sahasra/05_mnist_cnn.py --epochs 3 --steps-per-execution 8
+python with_sahasra/05_mnist_cnn_inference.py
 ```
 
 ## Timing Output
@@ -155,6 +158,11 @@ The examples now print timing information directly in their JSON output so local
   - `total_elapsed_sec`
   - `final_val_accuracy`
   - with Sahasra also prints `total_billed_inr`
+- `05_mnist_cnn_inference.py`
+  - `predict_elapsed_sec`
+  - `eval_elapsed_sec`
+  - `eval_accuracy`
+  - `sample_predictions`
 
 For local runs, the examples also print `backend`, so you can see whether JAX is using `cpu` or `gpu`.
 
@@ -185,6 +193,7 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false
 to reduce aggressive GPU memory preallocation during local runs.
 
 Downloaded MNIST files are cached locally under `shared/data/mnist/` and are ignored by git.
+Saved CNN checkpoints default to `shared/checkpoints/` and are ignored by git.
 
 ## Latest Timing Snapshot
 
@@ -261,6 +270,7 @@ python with_sahasra/04_tiny_transformer.py --steps-per-execution 8
 
 python without_sahasra/05_mnist_cnn.py
 python with_sahasra/05_mnist_cnn.py --steps-per-execution 8
+python with_sahasra/05_mnist_cnn_inference.py
 ```
 
 For the Sahasra runs, make sure these are set first:

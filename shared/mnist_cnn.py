@@ -9,6 +9,7 @@ import numpy as np
 
 
 DATA_DIR = Path(__file__).resolve().parent / "data" / "mnist"
+CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
 MNIST_MEAN = 0.1307
 MNIST_STD = 0.3081
 
@@ -158,3 +159,43 @@ def summary_dict(dataset: dict[str, np.ndarray], params: dict[str, Any]) -> dict
         "val_examples": int(dataset["val_x"].shape[0]),
         "parameter_count": count_parameters(params),
     }
+
+
+def save_params(params: dict[str, Any], checkpoint_path: Path) -> Path:
+    checkpoint_path = Path(checkpoint_path)
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    flat_params = {
+        "conv1_w": np.asarray(params["conv1"]["w"], dtype=np.float32),
+        "conv1_b": np.asarray(params["conv1"]["b"], dtype=np.float32),
+        "conv2_w": np.asarray(params["conv2"]["w"], dtype=np.float32),
+        "conv2_b": np.asarray(params["conv2"]["b"], dtype=np.float32),
+        "dense1_w": np.asarray(params["dense1"]["w"], dtype=np.float32),
+        "dense1_b": np.asarray(params["dense1"]["b"], dtype=np.float32),
+        "dense2_w": np.asarray(params["dense2"]["w"], dtype=np.float32),
+        "dense2_b": np.asarray(params["dense2"]["b"], dtype=np.float32),
+    }
+    np.savez(checkpoint_path, **flat_params)
+    return checkpoint_path
+
+
+def load_params(checkpoint_path: Path) -> dict[str, Any]:
+    checkpoint_path = Path(checkpoint_path)
+    with np.load(checkpoint_path) as data:
+        return {
+            "conv1": {
+                "w": np.asarray(data["conv1_w"], dtype=np.float32),
+                "b": np.asarray(data["conv1_b"], dtype=np.float32),
+            },
+            "conv2": {
+                "w": np.asarray(data["conv2_w"], dtype=np.float32),
+                "b": np.asarray(data["conv2_b"], dtype=np.float32),
+            },
+            "dense1": {
+                "w": np.asarray(data["dense1_w"], dtype=np.float32),
+                "b": np.asarray(data["dense1_b"], dtype=np.float32),
+            },
+            "dense2": {
+                "w": np.asarray(data["dense2_w"], dtype=np.float32),
+                "b": np.asarray(data["dense2_b"], dtype=np.float32),
+            },
+        }

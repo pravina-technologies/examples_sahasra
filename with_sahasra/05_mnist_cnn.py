@@ -20,7 +20,17 @@ import sahasra
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from shared.mnist_cnn import count_parameters, init_params, load_mnist_dataset, logits, summary_dict, train_step, loss_and_accuracy
+from shared.mnist_cnn import (
+    CHECKPOINT_DIR,
+    count_parameters,
+    init_params,
+    load_mnist_dataset,
+    logits,
+    loss_and_accuracy,
+    save_params,
+    summary_dict,
+    train_step,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -31,6 +41,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--steps-per-execution", type=int, default=8)
     parser.add_argument("--train-limit", type=int, default=6000)
     parser.add_argument("--val-limit", type=int, default=1000)
+    parser.add_argument(
+        "--checkpoint-path",
+        type=Path,
+        default=CHECKPOINT_DIR / "mnist_cnn_sahasra.npz",
+        help="Where to save the trained model checkpoint as a local .npz file.",
+    )
     parser.add_argument(
         "--data-dir",
         type=Path,
@@ -158,6 +174,18 @@ def main() -> None:
             )
 
         final_params = epoch_result.epoch_result.materialize_state()
+        checkpoint_path = save_params(final_params, args.checkpoint_path)
+        print(
+            json.dumps(
+                {
+                    "event": "checkpoint_saved",
+                    "checkpoint_path": str(checkpoint_path),
+                    "parameter_count": count_parameters(final_params),
+                    "mode": "with_sahasra",
+                }
+            ),
+            flush=True,
+        )
         sample_logits = logits_jit(final_params, dataset["val_x"][:8])
         sample_predictions = np.asarray(jnp.argmax(sample_logits, axis=-1), dtype=np.int32).tolist()
         print(
@@ -170,6 +198,7 @@ def main() -> None:
                     "worker_id": runtime.session.session.worker_id,
                     "total_elapsed_sec": time.perf_counter() - total_start,
                     "total_billed_inr": round(total_billed_inr, 4),
+                    "checkpoint_path": str(checkpoint_path),
                     "parameter_count": count_parameters(final_params),
                     **summary_dict(dataset, final_params),
                     "final_runtime_mode": last_execution.runtime_mode if last_execution is not None else None,
