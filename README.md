@@ -17,6 +17,13 @@ The examples are ordered from basic to more demanding:
 2. `02_mlp_inference.py`
 3. `03_mlp_training.py`
 4. `04_tiny_transformer.py`
+5. `05_mnist_cnn.py`
+
+The newest example pair uses a real dataset:
+
+- `05_mnist_cnn.py` downloads MNIST through `torchvision.datasets.MNIST`
+- the local and Sahasra versions share the same CNN model code
+- both print richer progress so you can watch training and validation improve live
 
 ## What This Repo Is For
 
@@ -56,7 +63,7 @@ If you only want to run the `without_sahasra/` examples:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install "jax>=0.4.35" "numpy>=1.26"
+python -m pip install "jax>=0.4.35" "numpy>=1.26" "torch>=2.8" "torchvision>=0.23"
 ```
 
 ### Sahasra examples from TestPyPI
@@ -67,6 +74,7 @@ If you want to run the `with_sahasra/` examples:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
+python -m pip install torch torchvision
 python -m pip install \
   --index-url https://pypi.org/simple \
   "httpx>=0.27,<1" \
@@ -114,6 +122,7 @@ python without_sahasra/01_basic_matmul.py
 python without_sahasra/02_mlp_inference.py
 python without_sahasra/03_mlp_training.py
 python without_sahasra/04_tiny_transformer.py --epochs 2
+python without_sahasra/05_mnist_cnn.py --epochs 3
 ```
 
 ### Sahasra
@@ -123,6 +132,7 @@ python with_sahasra/01_basic_matmul.py
 python with_sahasra/02_mlp_inference.py
 python with_sahasra/03_mlp_training.py --epochs 2 --steps-per-execution 8
 python with_sahasra/04_tiny_transformer.py --epochs 2 --steps-per-execution 8
+python with_sahasra/05_mnist_cnn.py --epochs 3 --steps-per-execution 8
 ```
 
 ## Timing Output
@@ -140,6 +150,11 @@ The examples now print timing information directly in their JSON output so local
 - `04_tiny_transformer.py`
   - `epoch_elapsed_sec`
   - `total_elapsed_sec`
+- `05_mnist_cnn.py`
+  - `epoch_elapsed_sec`
+  - `total_elapsed_sec`
+  - `final_val_accuracy`
+  - with Sahasra also prints `total_billed_inr`
 
 For local runs, the examples also print `backend`, so you can see whether JAX is using `cpu` or `gpu`.
 
@@ -168,6 +183,8 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false
 ```
 
 to reduce aggressive GPU memory preallocation during local runs.
+
+Downloaded MNIST files are cached locally under `shared/data/mnist/` and are ignored by git.
 
 ## Latest Timing Snapshot
 
@@ -241,6 +258,9 @@ python with_sahasra/03_mlp_training.py --steps-per-execution 8
 
 python without_sahasra/04_tiny_transformer.py
 python with_sahasra/04_tiny_transformer.py --steps-per-execution 8
+
+python without_sahasra/05_mnist_cnn.py
+python with_sahasra/05_mnist_cnn.py --steps-per-execution 8
 ```
 
 For the Sahasra runs, make sure these are set first:
