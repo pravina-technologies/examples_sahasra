@@ -20,11 +20,36 @@ import sahasra
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from shared.mnist_cnn import CHECKPOINT_DIR, load_mnist_dataset, load_params, logits, loss_and_accuracy
+from shared.mnist_cnn import CHECKPOINT_DIR, load_mnist_dataset, load_params, logits
 
 
-def infer_logits(params, images):
+def infer_logits(
+    conv1_w,
+    conv1_b,
+    conv2_w,
+    conv2_b,
+    dense1_w,
+    dense1_b,
+    dense2_w,
+    dense2_b,
+    images,
+):
+    params = {
+        "conv1": {"w": conv1_w, "b": conv1_b},
+        "conv2": {"w": conv2_w, "b": conv2_b},
+        "dense1": {"w": dense1_w, "b": dense1_b},
+        "dense2": {"w": dense2_w, "b": dense2_b},
+    }
     return logits(params, images)
+
+
+def _numeric_array(value) -> np.ndarray:
+    if isinstance(value, (list, tuple)) and len(value) == 1:
+        value = value[0]
+    array = np.asarray(value)
+    if array.dtype == object and array.shape == ():
+        array = np.asarray(array.item())
+    return np.asarray(array, dtype=np.float32)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -106,21 +131,26 @@ def main() -> None:
             flush=True,
         )
         remote_infer = sahasra.jit(infer_logits, runtime=runtime, output_mode="remote")
-        remote_eval = sahasra.jit(loss_and_accuracy, runtime=runtime, output_mode="remote")
-
         predict_start = time.perf_counter()
-        inference_result = remote_infer.remote(params, batch_x)
-        scores = np.asarray(inference_result.materialize())
-        predictions = np.asarray(jnp.argmax(jnp.asarray(scores), axis=-1), dtype=np.int32)
-        predict_elapsed = time.perf_counter() - predict_start
-
-        eval_start = time.perf_counter()
-        eval_result = remote_eval.remote(params, batch_x, batch_y)
-        eval_loss, eval_accuracy = eval_result.materialize()
-        eval_elapsed = time.perf_counter() - eval_start
-        total_billed_inr = float(inference_result.execution.billed_amount_inr or 0.0) + float(
-            eval_result.execution.billed_amount_inr or 0.0
+        inference_result = remote_infer.remote(
+            params["conv1"]["w"],
+            params["conv1"]["b"],
+            params["conv2"]["w"],
+            params["conv2"]["b"],
+            params["dense1"]["w"],
+            params["dense1"]["b"],
+            params["dense2"]["w"],
+            params["dense2"]["b"],
+            batch_x,
         )
+        scores = _numeric_array(inference_result.materialize())
+        predictions = np.asarray(np.argmax(scores, axis=-1), dtype=np.int32)
+        predict_elapsed = time.perf_counter() - predict_start
+        shifted = scores - np.max(scores, axis=-1, keepdims=True)
+        log_probs = shifted - np.log(np.sum(np.exp(shifted), axis=-1, keepdims=True))
+        eval_loss = float(-np.mean(log_probs[np.arange(batch_y.shape[0]), batch_y]))
+        eval_accuracy = float(np.mean(predictions == batch_y))
+        total_billed_inr = float(inference_result.execution.billed_amount_inr or 0.0)
 
         print(
             json.dumps(
@@ -133,7 +163,6 @@ def main() -> None:
                     "offset": start,
                     "total_elapsed_sec": time.perf_counter() - total_start,
                     "predict_elapsed_sec": predict_elapsed,
-                    "eval_elapsed_sec": eval_elapsed,
                     "session_id": runtime.session.session.id,
                     "worker_id": runtime.session.session.worker_id,
                     "runtime_mode": inference_result.execution.runtime_mode,

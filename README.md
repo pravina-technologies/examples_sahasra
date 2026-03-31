@@ -160,7 +160,6 @@ The examples now print timing information directly in their JSON output so local
   - with Sahasra also prints `total_billed_inr`
 - `05_mnist_cnn_inference.py`
   - `predict_elapsed_sec`
-  - `eval_elapsed_sec`
   - `eval_accuracy`
   - `sample_predictions`
 
