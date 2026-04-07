@@ -13,6 +13,7 @@ So the repo is split into two parallel folders:
 
 The examples are ordered from basic to more demanding:
 
+0. `00_sahasra_jit_decorator.py` in `with_sahasra/`
 1. `01_basic_matmul.py`
 2. `02_mlp_inference.py`
 3. `03_mlp_training.py`
@@ -53,6 +54,12 @@ Suggested first pair:
 ```bash
 python without_sahasra/01_basic_matmul.py
 python with_sahasra/01_basic_matmul.py
+```
+
+If you specifically want to see the decorator-style public API first:
+
+```bash
+python with_sahasra/00_sahasra_jit_decorator.py
 ```
 
 ## Install
@@ -255,6 +262,8 @@ Notes:
 Run these from the repo root after activating your environment:
 
 ```bash
+python with_sahasra/00_sahasra_jit_decorator.py
+
 python without_sahasra/01_basic_matmul.py
 python with_sahasra/01_basic_matmul.py
 
@@ -295,10 +304,13 @@ examples_sahasra/
 │   ├── 03_mlp_training.py
 │   └── 04_tiny_transformer.py
 └── with_sahasra/
+    ├── 00_sahasra_jit_decorator.py
     ├── 01_basic_matmul.py
     ├── 02_mlp_inference.py
     ├── 03_mlp_training.py
-    └── 04_tiny_transformer.py
+    ├── 04_tiny_transformer.py
+    ├── 05_mnist_cnn.py
+    └── 05_mnist_cnn_inference.py
 ```
 
 ## Why Sahasra
