@@ -27,7 +27,6 @@ from shared.mnist_cnn import (
     load_mnist_dataset,
     logits,
     loss_and_accuracy,
-    save_params,
     summary_dict,
     train_step,
 )
@@ -174,12 +173,13 @@ def main() -> None:
             )
 
         final_params = epoch_result.epoch_result.materialize_state()
-        checkpoint_path = save_params(final_params, args.checkpoint_path)
+        checkpoint_path = sahasra.save_checkpoint(args.checkpoint_path, final_params, runtime=runtime)
         print(
             json.dumps(
                 {
                     "event": "checkpoint_saved",
                     "checkpoint_path": str(checkpoint_path),
+                    "checkpoint_format": "npz_via_sahasra.save_checkpoint",
                     "parameter_count": count_parameters(final_params),
                     "mode": "with_sahasra",
                 }
@@ -199,6 +199,7 @@ def main() -> None:
                     "total_elapsed_sec": time.perf_counter() - total_start,
                     "total_billed_inr": round(total_billed_inr, 4),
                     "checkpoint_path": str(checkpoint_path),
+                    "checkpoint_format": "npz_via_sahasra.save_checkpoint",
                     "parameter_count": count_parameters(final_params),
                     **summary_dict(dataset, final_params),
                     "final_runtime_mode": last_execution.runtime_mode if last_execution is not None else None,

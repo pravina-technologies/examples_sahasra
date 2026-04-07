@@ -14,42 +14,16 @@ os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "3")
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 import jax
-import jax.numpy as jnp
 import numpy as np
 import sahasra
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from shared.mnist_cnn import CHECKPOINT_DIR, load_mnist_dataset, load_params, logits
+from shared.mnist_cnn import CHECKPOINT_DIR, load_mnist_dataset, logits
 
 
-def infer_logits(
-    conv1_w,
-    conv1_b,
-    conv2_w,
-    conv2_b,
-    dense1_w,
-    dense1_b,
-    dense2_w,
-    dense2_b,
-    images,
-):
-    params = {
-        "conv1": {"w": conv1_w, "b": conv1_b},
-        "conv2": {"w": conv2_w, "b": conv2_b},
-        "dense1": {"w": dense1_w, "b": dense1_b},
-        "dense2": {"w": dense2_w, "b": dense2_b},
-    }
+def infer_logits(params, images):
     return logits(params, images)
-
-
-def _numeric_array(value) -> np.ndarray:
-    if isinstance(value, (list, tuple)) and len(value) == 1:
-        value = value[0]
-    array = np.asarray(value)
-    if array.dtype == object and array.shape == ():
-        array = np.asarray(array.item())
-    return np.asarray(array, dtype=np.float32)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -79,12 +53,13 @@ def main() -> None:
             f"Checkpoint not found at {args.checkpoint_path}. Run with_sahasra/05_mnist_cnn.py first."
         )
 
-    params = load_params(args.checkpoint_path)
+    params = sahasra.load_checkpoint(args.checkpoint_path)
     print(
         json.dumps(
             {
                 "event": "checkpoint_loaded",
                 "checkpoint_path": str(args.checkpoint_path),
+                "checkpoint_format": "npz_via_sahasra.load_checkpoint",
                 "mode": "with_sahasra",
             }
         ),
@@ -130,20 +105,11 @@ def main() -> None:
             ),
             flush=True,
         )
+        remote_params = sahasra.device_put(params, runtime=runtime)
         remote_infer = sahasra.jit(infer_logits, runtime=runtime, output_mode="remote")
         predict_start = time.perf_counter()
-        inference_result = remote_infer.remote(
-            params["conv1"]["w"],
-            params["conv1"]["b"],
-            params["conv2"]["w"],
-            params["conv2"]["b"],
-            params["dense1"]["w"],
-            params["dense1"]["b"],
-            params["dense2"]["w"],
-            params["dense2"]["b"],
-            batch_x,
-        )
-        scores = _numeric_array(inference_result.materialize())
+        inference_result = remote_infer.remote(remote_params, batch_x)
+        scores = np.asarray(sahasra.device_get(inference_result), dtype=np.float32)
         predictions = np.asarray(np.argmax(scores, axis=-1), dtype=np.int32)
         predict_elapsed = time.perf_counter() - predict_start
         shifted = scores - np.max(scores, axis=-1, keepdims=True)
@@ -161,6 +127,7 @@ def main() -> None:
                     "checkpoint_path": str(args.checkpoint_path),
                     "batch_size": int(batch_x.shape[0]),
                     "offset": start,
+                    "params_pinned_once": True,
                     "total_elapsed_sec": time.perf_counter() - total_start,
                     "predict_elapsed_sec": predict_elapsed,
                     "session_id": runtime.session.session.id,

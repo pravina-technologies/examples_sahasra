@@ -14,8 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from shared.synthetic_mlp import init_params, logits, make_dataset
 
 
-def infer_logits(w1, b1, w2, b2, x):
-    return logits({"w1": w1, "b1": b1, "w2": w2, "b2": b2}, x)
+def infer_logits(params, x):
+    return logits(params, x)
 
 
 def main() -> None:
@@ -32,20 +32,15 @@ def main() -> None:
         gpu_class="g5",
         region="ap-south-1",
     ) as runtime:
+        remote_params = sahasra.device_put(params, runtime=runtime)
         remote_infer = sahasra.jit(infer_logits, runtime=runtime, output_mode="remote")
         executions = []
         probs = None
         elapsed = []
         for _ in range(3):
             start = time.perf_counter()
-            result = remote_infer.remote(
-                params["w1"],
-                params["b1"],
-                params["w2"],
-                params["b2"],
-                batch,
-            )
-            scores = np.asarray(result.materialize())
+            result = remote_infer.remote(remote_params, batch)
+            scores = np.asarray(sahasra.device_get(result))
             probs = np.asarray(jax.nn.softmax(jnp.asarray(scores), axis=-1))
             probs = np.atleast_2d(probs)
             elapsed.append(time.perf_counter() - start)
@@ -65,6 +60,7 @@ def main() -> None:
                     "mode": "with_sahasra",
                     "batch_size": int(batch.shape[0]),
                     "output_shape": list(probs.shape),
+                    "params_pinned_once": True,
                     "elapsed_sec": [round(float(value), 6) for value in elapsed],
                     "avg_elapsed_sec": float(np.mean(elapsed)),
                     "executions": executions,

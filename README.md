@@ -44,7 +44,7 @@ It is trying to make that difference understandable and practical.
 If you want the fastest path through the repo:
 
 1. Run one local example from `without_sahasra/`
-2. Install Sahasra `0.1.1` from TestPyPI
+2. Install Sahasra `0.1.2` from TestPyPI
 3. Create an API key from the Sahasra app
 4. Run the matching example from `with_sahasra/`
 
@@ -87,12 +87,12 @@ python -m pip install \
 python -m pip install \
   --index-url https://test.pypi.org/simple/ \
   --extra-index-url https://pypi.org/simple \
-  "sahasra-core==0.1.1"
+  "sahasra-core==0.1.2"
 
 python -m pip install \
   --index-url https://test.pypi.org/simple/ \
   --extra-index-url https://pypi.org/simple \
-  "sahasra==0.1.1"
+  "sahasra==0.1.2"
 ```
 
 Then configure your Sahasra environment:
@@ -112,8 +112,8 @@ sahasra billing-me --base-url https://demo.sahasra.dev
 
 Current validated invite-only beta packages:
 
-- `sahasra-core==0.1.1`
-- `sahasra==0.1.1`
+- `sahasra-core==0.1.2`
+- `sahasra==0.1.2`
 
 ## Run The Examples
 

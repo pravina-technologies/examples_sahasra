@@ -26,7 +26,7 @@ def main() -> None:
         remote_fn = sahasra.jit(matmul_relu, runtime=runtime, output_mode="remote")
         start = time.perf_counter()
         result = remote_fn.remote(a, b)
-        out = result.materialize()
+        out = sahasra.device_get(result)
         elapsed = time.perf_counter() - start
         print(
             json.dumps(
