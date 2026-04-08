@@ -21,6 +21,14 @@ The examples are ordered from basic to more demanding:
 5. `05_mnist_cnn.py`
 6. `05_mnist_cnn_inference.py` in `with_sahasra/`
 
+There is also an advanced pure-JAX Sahasra-only set that mirrors the latest live-validated Phase 11 features:
+
+7. `06_pytree_inference.py`
+8. `07_remote_output_tree.py`
+9. `08_checkpoint_roundtrip.py`
+10. `09_repeated_inference.py`
+11. `10_jax_transforms.py`
+
 The newest example pair uses a real dataset:
 
 - `05_mnist_cnn.py` downloads MNIST through `torchvision.datasets.MNIST`
@@ -60,6 +68,16 @@ If you specifically want to see the decorator-style public API first:
 
 ```bash
 python with_sahasra/00_sahasra_jit_decorator.py
+```
+
+If you want the newest pure-JAX Sahasra behavior after that, use this order:
+
+```bash
+python with_sahasra/06_pytree_inference.py
+python with_sahasra/07_remote_output_tree.py
+python with_sahasra/08_checkpoint_roundtrip.py
+python with_sahasra/09_repeated_inference.py
+python with_sahasra/10_jax_transforms.py
 ```
 
 ## Install
@@ -143,6 +161,11 @@ python with_sahasra/03_mlp_training.py --epochs 2 --steps-per-execution 8
 python with_sahasra/04_tiny_transformer.py --epochs 2 --steps-per-execution 8
 python with_sahasra/05_mnist_cnn.py --epochs 3 --steps-per-execution 8
 python with_sahasra/05_mnist_cnn_inference.py
+python with_sahasra/06_pytree_inference.py
+python with_sahasra/07_remote_output_tree.py
+python with_sahasra/08_checkpoint_roundtrip.py
+python with_sahasra/09_repeated_inference.py
+python with_sahasra/10_jax_transforms.py
 ```
 
 ## Timing Output
@@ -169,6 +192,16 @@ The examples now print timing information directly in their JSON output so local
   - `predict_elapsed_sec`
   - `eval_accuracy`
   - `sample_predictions`
+- `06_pytree_inference.py`
+  - local vs remote nested pytree output summaries
+- `07_remote_output_tree.py`
+  - remote output tree structure and materialized shapes
+- `08_checkpoint_roundtrip.py`
+  - checkpoint path and before/after output equality
+- `09_repeated_inference.py`
+  - repeated warm-runtime timings and remote output tree structure
+- `10_jax_transforms.py`
+  - local vs remote `grad`, `value_and_grad`, and `vmap` summaries
 
 For local runs, the examples also print `backend`, so you can see whether JAX is using `cpu` or `gpu`.
 
@@ -279,6 +312,11 @@ python with_sahasra/04_tiny_transformer.py --steps-per-execution 8
 python without_sahasra/05_mnist_cnn.py
 python with_sahasra/05_mnist_cnn.py --steps-per-execution 8
 python with_sahasra/05_mnist_cnn_inference.py
+python with_sahasra/06_pytree_inference.py
+python with_sahasra/07_remote_output_tree.py
+python with_sahasra/08_checkpoint_roundtrip.py
+python with_sahasra/09_repeated_inference.py
+python with_sahasra/10_jax_transforms.py
 ```
 
 For the Sahasra runs, make sure these are set first:
@@ -297,6 +335,7 @@ examples_sahasra/
 │   ├── data/
 │   │   └── corpus.txt
 │   ├── synthetic_mlp.py
+│   ├── pure_jax_runtime.py
 │   └── tiny_transformer.py
 ├── without_sahasra/
 │   ├── 01_basic_matmul.py
@@ -310,7 +349,12 @@ examples_sahasra/
     ├── 03_mlp_training.py
     ├── 04_tiny_transformer.py
     ├── 05_mnist_cnn.py
-    └── 05_mnist_cnn_inference.py
+    ├── 05_mnist_cnn_inference.py
+    ├── 06_pytree_inference.py
+    ├── 07_remote_output_tree.py
+    ├── 08_checkpoint_roundtrip.py
+    ├── 09_repeated_inference.py
+    └── 10_jax_transforms.py
 ```
 
 ## Why Sahasra
