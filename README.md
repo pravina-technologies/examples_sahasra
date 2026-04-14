@@ -20,14 +20,16 @@ The examples are ordered from basic to more demanding:
 4. `04_tiny_transformer.py`
 5. `05_mnist_cnn.py`
 6. `05_mnist_cnn_inference.py` in `with_sahasra/`
+7. `06_scan_mlp_training.py` in `without_sahasra/`
 
 There is also an advanced pure-JAX Sahasra-only set that mirrors the latest live-validated Phase 11 features:
 
-7. `06_pytree_inference.py`
-8. `07_remote_output_tree.py`
-9. `08_checkpoint_roundtrip.py`
-10. `09_repeated_inference.py`
-11. `10_jax_transforms.py`
+8. `06_pytree_inference.py`
+9. `07_remote_output_tree.py`
+10. `08_checkpoint_roundtrip.py`
+11. `09_repeated_inference.py`
+12. `10_jax_transforms.py`
+13. `11_scan_mlp_training.py`
 
 The newest example pair uses a real dataset:
 
@@ -35,6 +37,13 @@ The newest example pair uses a real dataset:
 - the local and Sahasra versions share the same CNN model code
 - both print richer progress so you can watch training and validation improve live
 - the Sahasra training script saves a `.npz` checkpoint, and `05_mnist_cnn_inference.py` reloads it in a fresh inference session
+
+The newest agent-style training example is:
+
+- `without_sahasra/06_scan_mlp_training.py`
+- `with_sahasra/11_scan_mlp_training.py`
+
+This pair trains a 10-class MLP with Adam on a synthetic Gaussian-mixture dataset. It is designed to show the recommended agent-training shape from `https://www.sahasra.dev/agent-training.txt`: keep math in pure JAX, pin reusable arrays once, put the epoch/batch loop inside `jax.lax.scan`, make one remote training call, then save a checkpoint.
 
 ## What This Repo Is For
 
@@ -150,6 +159,7 @@ python without_sahasra/02_mlp_inference.py
 python without_sahasra/03_mlp_training.py
 python without_sahasra/04_tiny_transformer.py --epochs 2
 python without_sahasra/05_mnist_cnn.py --epochs 3
+python without_sahasra/06_scan_mlp_training.py --epochs 5
 ```
 
 ### Sahasra
@@ -166,6 +176,7 @@ python with_sahasra/07_remote_output_tree.py
 python with_sahasra/08_checkpoint_roundtrip.py
 python with_sahasra/09_repeated_inference.py
 python with_sahasra/10_jax_transforms.py
+python with_sahasra/11_scan_mlp_training.py --epochs 5
 ```
 
 ## Agent-Assisted Training Path
@@ -175,7 +186,8 @@ This repo is now a good testbed for Claude Code, Codex, or another coding agent 
 For a clean agent-assisted run, give the agent this instruction first:
 
 ```text
-Read https://www.sahasra.dev/llms.txt and https://www.sahasra.dev/quickstart.txt first.
+Read https://www.sahasra.dev/llms.txt, https://www.sahasra.dev/quickstart.txt, and https://www.sahasra.dev/agent-training.txt first.
+If SAHASRA_API_BEARER_TOKEN is missing or runtime-status is reconnecting/unavailable, stop and ask the user.
 Then use this repo to run the local baseline, the Sahasra training run, and the separate inference script.
 Do not claim Sahasra has autoscaling, public pmap/pjit, user-controlled workers, or exact GPU-minute metering.
 ```
@@ -191,6 +203,16 @@ python without_sahasra/05_mnist_cnn.py --epochs 3 --log-every-steps 5 --eval-eve
 python with_sahasra/05_mnist_cnn.py --epochs 3 --steps-per-execution 8
 python with_sahasra/05_mnist_cnn_inference.py
 ```
+
+For a more agent-realistic pure-JAX training test, use:
+
+```bash
+curl https://www.sahasra.dev/runtime-status
+python without_sahasra/06_scan_mlp_training.py --epochs 5
+python with_sahasra/11_scan_mlp_training.py --epochs 5
+```
+
+That scan-based example avoids hundreds of Python-level remote calls and keeps the full epoch/batch loop inside one JAX function.
 
 A demo-ready pass should show:
 
@@ -227,6 +249,12 @@ The examples now print timing information directly in their JSON output so local
   - `predict_elapsed_sec`
   - `eval_accuracy`
   - `sample_predictions`
+- `06_scan_mlp_training.py`
+  - `train_elapsed_sec`
+  - `total_elapsed_sec`
+  - `total_train_steps`
+  - `val_accuracy`
+  - `confusion_matrix`
 - `06_pytree_inference.py`
   - local vs remote nested pytree output summaries
 - `07_remote_output_tree.py`
@@ -237,6 +265,14 @@ The examples now print timing information directly in their JSON output so local
   - repeated warm-runtime timings and remote output tree structure
 - `10_jax_transforms.py`
   - local vs remote `grad`, `value_and_grad`, and `vmap` summaries
+- `11_scan_mlp_training.py`
+  - `pin_elapsed_sec`
+  - `remote_train_elapsed_sec`
+  - `remote_eval_elapsed_sec`
+  - `checkpoint_elapsed_sec`
+  - `total_train_steps`
+  - `val_accuracy`
+  - `confusion_matrix`
 
 For local runs, the examples also print `backend`, so you can see whether JAX is using `cpu` or `gpu`.
 
