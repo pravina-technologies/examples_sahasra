@@ -123,16 +123,16 @@ python -m pip install \
 Then configure your Sahasra environment:
 
 ```bash
-export SAHASRA_API_URL="https://demo.sahasra.dev"
+export SAHASRA_API_URL="https://www.sahasra.dev"
 export SAHASRA_API_BEARER_TOKEN="sk_sahasra_..."
 ```
 
 Check that your install works:
 
 ```bash
-sahasra doctor --base-url https://demo.sahasra.dev
-sahasra me --base-url https://demo.sahasra.dev
-sahasra billing-me --base-url https://demo.sahasra.dev
+sahasra doctor --base-url https://www.sahasra.dev
+sahasra me --base-url https://www.sahasra.dev
+sahasra billing-me --base-url https://www.sahasra.dev
 ```
 
 Current validated invite-only beta packages:
@@ -167,6 +167,41 @@ python with_sahasra/08_checkpoint_roundtrip.py
 python with_sahasra/09_repeated_inference.py
 python with_sahasra/10_jax_transforms.py
 ```
+
+## Agent-Assisted Training Path
+
+This repo is now a good testbed for Claude Code, Codex, or another coding agent because the public Sahasra docs are readable through `llms.txt` and the examples are intentionally small.
+
+For a clean agent-assisted run, give the agent this instruction first:
+
+```text
+Read https://www.sahasra.dev/llms.txt and https://www.sahasra.dev/quickstart.txt first.
+Then use this repo to run the local baseline, the Sahasra training run, and the separate inference script.
+Do not claim Sahasra has autoscaling, public pmap/pjit, user-controlled workers, or exact GPU-minute metering.
+```
+
+Then use this pipeline:
+
+```bash
+export SAHASRA_API_URL="https://www.sahasra.dev"
+export SAHASRA_API_BEARER_TOKEN="sk_sahasra_..."
+
+sahasra doctor --base-url https://www.sahasra.dev
+python without_sahasra/05_mnist_cnn.py --epochs 3 --log-every-steps 5 --eval-every-steps 10 --eval-subset 256
+python with_sahasra/05_mnist_cnn.py --epochs 3 --steps-per-execution 8
+python with_sahasra/05_mnist_cnn_inference.py
+```
+
+A demo-ready pass should show:
+
+- `sahasra doctor` succeeds
+- the local MNIST CNN improves validation accuracy
+- the Sahasra MNIST CNN reports `runtime_mode = "jax_export_local"` and `billing_status = "billed"`
+- the Sahasra training script saves `shared/checkpoints/mnist_cnn_sahasra.npz`
+- `05_mnist_cnn_inference.py` loads that checkpoint in a fresh runtime and prints `sample_predictions`
+- `/runtime-status` stays `available` or clearly reports a temporary queue/reconnect state
+
+For a shorter screen recording, use `--epochs 1` or `--epochs 2` first, then run the 3-epoch version once for the final validated output.
 
 ## Timing Output
 
@@ -275,7 +310,7 @@ Notes:
 
 ## Latest Sahasra Remote Snapshot
 
-Latest Sahasra timings collected against `https://demo.sahasra.dev` on the current single-worker beta:
+Latest Sahasra timings collected against `https://www.sahasra.dev` on the current single-worker beta:
 
 | Example | Mode | Key Timing |
 | --- | --- | --- |
@@ -322,7 +357,7 @@ python with_sahasra/10_jax_transforms.py
 For the Sahasra runs, make sure these are set first:
 
 ```bash
-export SAHASRA_API_URL="https://demo.sahasra.dev"
+export SAHASRA_API_URL="https://www.sahasra.dev"
 export SAHASRA_API_BEARER_TOKEN="sk_sahasra_..."
 ```
 
